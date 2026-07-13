@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Ancestor Calendar™</title>
+  <meta name="description" content="Your ancestors did not survive thousands of years of hardship for you to casually pick a calendar date. Earn your appointment." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Ambient background -->
+  <div class="stars" aria-hidden="true"></div>
+  <div class="aurora" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- Toast / dramatic notifications -->
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <!-- ============ LOADING SCREEN ============ -->
+  <section id="screen-loading" class="screen active">
+    <div class="loader-wrap">
+      <div class="sigil">
+        <div class="sigil-ring r1"></div>
+        <div class="sigil-ring r2"></div>
+        <div class="sigil-ring r3"></div>
+        <div class="sigil-core">‡</div>
+      </div>
+      <h1 class="brand-title">ANCESTOR&nbsp;CALENDAR<span class="tm">™</span></h1>
+      <p class="brand-sub">Scheduling, made unnecessarily meaningful.</p>
+      <div class="loader-lines" id="loader-lines"></div>
+      <div class="loader-bar"><div class="loader-bar-fill" id="loader-bar-fill"></div></div>
+      <p class="loader-hint" id="loader-hint">Do not close this ritual.</p>
+    </div>
+  </section>
+
+  <!-- ============ ONBOARDING ============ -->
+  <section id="screen-onboarding" class="screen">
+    <div class="panel glass onboard">
+      <div class="eyebrow">STEP I · ANCESTRAL INTAKE</div>
+      <h2 class="display">Identify yourself to the Council.</h2>
+      <p class="lead">We require this information to personalize your ancestral consultation. Your ancestors did not survive thousands of years of hardship for a blank name field.</p>
+
+      <form id="onboard-form" class="form-grid" autocomplete="off">
+        <label class="field">
+          <span class="field-label">First name</span>
+          <input id="in-name" class="input" type="text" placeholder="The name your lineage whispers" required maxlength="24" />
+        </label>
+        <label class="field">
+          <span class="field-label">Country of origin</span>
+          <select id="in-country" class="input" required>
+            <option value="" disabled selected>Where does your story begin?</option>
+          </select>
+        </label>
+        <button class="btn btn-primary btn-block" type="submit">
+          <span>Summon My Fictional Council</span>
+        </button>
+      </form>
+      <p class="fineprint">Disclaimer: We make no claim to know your real ancestry. Our ancestral council is entirely imaginary and dramatically overqualified.</p>
+    </div>
+  </section>
+
+  <!-- ============ ANCESTRAL PROFILE ============ -->
+  <section id="screen-profile" class="screen">
+    <div class="panel glass profile">
+      <div class="eyebrow">CONSULTATION COMPLETE</div>
+      <div class="profile-crest" id="profile-crest">♔</div>
+      <h2 class="display" id="profile-title">Your Scheduling Personality</h2>
+      <p class="profile-body" id="profile-body"></p>
+      <div class="profile-traits" id="profile-traits"></div>
+      <button class="btn btn-primary btn-block" id="profile-continue">
+        <span>Enter the Calendar of Trials</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ PHYSICS DATE SELECTION ============ -->
+  <section id="screen-physics" class="screen">
+    <div class="physics-layout">
+      <div class="physics-head">
+        <div class="eyebrow">STEP II · THE MONTH TRIAL</div>
+        <h2 class="display">Aim the orb. The month is up to physics.</h2>
+        <p class="lead" id="physics-stage-label">Tap anywhere on the board to drop the orb from that spot. Wherever it lands becomes your <strong>month</strong>.</p>
+      </div>
+
+      <div class="board-frame">
+        <canvas id="physics-canvas" width="640" height="620"></canvas>
+        <div class="board-verdict" id="board-verdict"></div>
+      </div>
+
+      <div class="physics-controls">
+        <button class="btn btn-primary btn-drop" id="btn-drop">
+          <span>Drop the Orb</span>
+        </button>
+        <p class="physics-note" id="physics-note">Move your cursor over the board to aim. Or press the button and drop from where you last aimed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MATH VERIFICATION ============ -->
+  <section id="screen-math" class="screen">
+    <div class="panel glass math">
+      <div class="eyebrow">STEP III · THE DAY TRIAL</div>
+      <h2 class="display">Your day is hidden inside a number.</h2>
+      <div class="date-badge" id="math-date-badge"></div>
+      <p class="lead">The council has drawn the sacred number <strong id="math-doy">?</strong>. Enter its square correctly and the number will reveal your day. The ancient calculator spirits are watching.</p>
+
+      <div class="math-challenge">
+        <div class="math-equation"><span id="math-num">n</span><sup>2</sup> = ?</div>
+        <input id="math-input" class="input input-math" inputmode="numeric" placeholder="Enter the square" />
+        <button class="btn btn-primary" id="btn-math-submit"><span>Submit to Destiny</span></button>
+      </div>
+      <div class="math-analyzing" id="math-analyzing"></div>
+      <p class="fineprint">Struggling? <button class="link-btn" id="btn-hint">Draw a different sacred number</button></p>
+    </div>
+  </section>
+
+  <!-- ============ EVENT CREATION ============ -->
+  <section id="screen-event" class="screen">
+    <div class="panel glass event">
+      <div class="eyebrow">STEP IV · DECLARE YOUR MISSION</div>
+      <h2 class="display">Destiny has granted you <span id="event-date-inline"></span>.</h2>
+      <form id="event-form" class="form-grid form-two">
+        <label class="field span-2">
+          <span class="field-label">What important mission are you scheduling?</span>
+          <input id="ev-name" class="input" type="text" placeholder="e.g. Consume popcorn heroically" required maxlength="80" />
+        </label>
+        <label class="field">
+          <span class="field-label">When shall the trial begin?</span>
+          <input id="ev-start" class="input" type="time" value="20:00" required />
+        </label>
+        <label class="field">
+          <span class="field-label">When shall you be free?</span>
+          <input id="ev-end" class="input" type="time" value="21:30" required />
+        </label>
+        <label class="field span-2">
+          <span class="field-label">Where shall destiny unfold?</span>
+          <input id="ev-loc" class="input" type="text" placeholder="A location worthy of your bloodline" maxlength="80" />
+        </label>
+        <label class="field span-2">
+          <span class="field-label">Describe the significance of this act</span>
+          <textarea id="ev-desc" class="input" rows="3" placeholder="Explain yourself to the ages" maxlength="300"></textarea>
+        </label>
+        <label class="field span-2">
+          <span class="field-label">Importance level</span>
+          <div class="importance" id="ev-importance">
+            <button type="button" class="imp-opt" data-val="Trivial">Trivial</button>
+            <button type="button" class="imp-opt" data-val="Notable">Notable</button>
+            <button type="button" class="imp-opt active" data-val="Grave">Grave</button>
+            <button type="button" class="imp-opt" data-val="Civilization-Altering">Civilization-Altering</button>
+          </div>
+        </label>
+        <button class="btn btn-primary btn-block span-2" type="submit"><span>Prepare the Offering</span></button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ ASK ANCESTORS ============ -->
+  <section id="screen-ask" class="screen">
+    <div class="panel glass ask">
+      <div class="eyebrow">STEP V · FINAL JUDGEMENT</div>
+      <h2 class="display">The event is not yet saved.</h2>
+      <p class="lead">Nothing is real until the Council has spoken. Present your plan and await their theatrical verdict.</p>
+
+      <button class="btn btn-ancestor" id="btn-ask">
+        <span class="ask-glow"></span>
+        <span class="ask-label">Ask Your Ancestors</span>
+      </button>
+
+      <div class="verdict" id="verdict" hidden>
+        <div class="verdict-scores" id="verdict-scores"></div>
+        <div class="verdict-message" id="verdict-message"></div>
+        <div class="verdict-extra" id="verdict-extra"></div>
+        <div class="verdict-actions">
+          <button class="btn btn-primary" id="btn-commit"><span>Etch Into the Timeline</span></button>
+          <button class="btn btn-ghost" id="btn-reconsider"><span>Reconsider (cowardly)</span></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CALENDAR VIEW ============ -->
+  <section id="screen-calendar" class="screen">
+    <div class="cal-wrap">
+      <header class="cal-header">
+        <div>
+          <div class="eyebrow">THE TIMELINE OF <span id="cal-user">YOU</span></div>
+          <h2 class="display">Your Sanctioned Missions</h2>
+        </div>
+        <div class="cal-stats">
+          <div class="stat">
+            <div class="stat-num" id="stat-streak">0</div>
+            <div class="stat-label">Ancestral Streak 🔥</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num" id="stat-count">0</div>
+            <div class="stat-label">Missions Sanctioned</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="cal-toolbar">
+        <button class="btn btn-primary" id="btn-new-event"><span>Begin a New Trial</span></button>
+        <div class="streak-note" id="streak-note">Days without disappointing your fictional ancestors: <strong id="streak-inline">0</strong></div>
+      </div>
+
+      <div id="events-list" class="events-list"></div>
+      <div id="events-empty" class="events-empty">
+        <div class="empty-crest">⌛</div>
+        <p>The timeline is barren. Your ancestors are watching an empty calendar and quietly judging.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RICKROLL / REJECTION MODAL ============ -->
+  <div id="rickroll" class="modal-overlay" hidden>
+    <div class="modal reject shake-target">
+      <div class="reject-flash"></div>
+      <h3 class="reject-title">⚠ ANCESTRAL REJECTION DETECTED ⚠</h3>
+      <p class="reject-sub">You tried to cheat destiny.</p>
+      <div class="video-wrap">
+        <iframe id="rr-frame" width="100%" height="100%"
+          src="about:blank"
+          title="A message from the ancestors"
+          frameborder="0"
+          allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        <div class="video-fallback" id="rr-fallback">
+          <div class="rr-face">🕺</div>
+          <p>Never gonna give you up.<br/>Never gonna let you schedule.</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btn-accept-defeat"><span>Accept defeat</span></button>
+        <button class="btn btn-primary" id="btn-try-again"><span>Try Again</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ EVENT DETAIL MODAL ============ -->
+  <div id="event-modal" class="modal-overlay" hidden>
+    <div class="modal detail">
+      <button class="modal-close" id="btn-detail-close" aria-label="Close">✕</button>
+      <div id="detail-body"></div>
+    </div>
+  </div>
+
+  <!-- Settings / API key drawer trigger -->
+  <button id="btn-settings" class="settings-fab" title="Council Configuration">⚙</button>
+  <div id="settings-panel" class="settings-panel" hidden>
+    <h4>Council Configuration</h4>
+    <p class="settings-note">A demo Gemini key is built in, so the live council works out of the box. Paste your own key to override it (free at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>). If all else fails, the Council speaks from its ancient offline scrolls.</p>
+    <label class="field">
+      <span class="field-label">Gemini API Key</span>
+      <input id="gemini-key" class="input" type="password" placeholder="AIza..." />
+    </label>
+    <div class="settings-actions">
+      <button class="btn btn-primary btn-sm" id="btn-save-key"><span>Save</span></button>
+      <button class="btn btn-ghost btn-sm" id="btn-reset-app"><span>Reset all progress</span></button>
+    </div>
+    <p class="settings-status" id="settings-status"></p>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
