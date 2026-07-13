@@ -883,6 +883,7 @@ $('btn-ask').addEventListener('click', async () => {
     historical: ai.historical,
     wisdomCategory: ai.wisdomCategory || wisdomCategory,
     difficulty: difficultyOf(state.draft),
+    approved: ai.approved !== false,
   };
 
   label.textContent = original;
@@ -894,19 +895,24 @@ async function askGemini(ev, local, wisdomCategory) {
   if (!key) return null;
 
   const p = state.profile;
-  const prompt = `You are a fictional, dramatic ancestral advisor for a comedy calendar app called "Ancestor Calendar".
-You are reviewing a person's calendar event and delivering a theatrical verdict.
+  const reasonsText = local.reasons.map((r) => `${r.t === 'plus' ? '+' : '-'} ${r.txt}`).join('\n');
+  const prompt = `You are the fictional ancestral council for a comedy calendar app called "Ancestor Calendar".
+Every user of this app is an attendee of NEXUS NATIONALITY CAMP, and the council serves the camp. Reference the camp naturally when it lands.
+You are reviewing one attendee's calendar event and delivering a LOUD, theatrical, deeply personal verdict.
 
 RULES:
-- Be funny, exaggerated, theatrical, and warm. Comedy, never cruelty.
+- Be VOCAL. Big feelings, big declarations, dramatic pauses. The council gasps, argues among themselves, slams tables, weeps with pride or despair.
+- Say the user's name OFTEN. Open with it. Repeat it mid-rant for emphasis. Make the verdict feel written for them alone, referencing their specific event details (the time, the location, the description, the importance they declared).
+- JUDGE HONESTLY. If the plan is lazy, vague, or pathetic (no real description, "chill", scrolling, a meeting that could be a message), REJECT IT. Roast the PLAN vocally and hilariously, never the person, never their country or culture. Tell them exactly what offended the council and what a worthy version would look like.
+- If the plan shows effort, friendship, growth, courage, or joy, APPROVE IT with equally over-the-top enthusiasm.
 - You are EXPLICITLY fictional. Never claim to know the user's real family, real history, or real ancestry.
-- Refer to "your fictional ancestral council". Be playful about the user's country in a positive, affectionate way. Never insult a nationality or culture.
-- End on an approving, joyful note. Joy is also important.
+- Be playful about the user's selected country in a positive, affectionate way. Never insult a nationality or culture.
 - Never use em dashes or en dashes. Use commas, periods, or colons instead.
 
 USER:
 - Name: ${p.name}
 - Country selected: ${p.country}
+- Camp: Nexus Nationality Camp
 
 EVENT:
 - Mission: ${ev.name}
@@ -916,10 +922,15 @@ EVENT:
 - Description: ${ev.description}
 - Importance declared: ${ev.importance}
 
+PRELIMINARY AUDIT (advisory, you may overrule with reasoning):
+- Approval score: ${local.score}/100
+${reasonsText}
+
 Respond ONLY with valid JSON (no markdown fences) in exactly this shape:
 {
-  "message": "3-6 short dramatic paragraphs separated by \\n\\n. Use the user's name. Be theatrical, funny, and ultimately approving.",
-  "historical": "2-4 short lines contrasting ancestral hardship with this mundane event, ending with a reassurance that the council believes they will survive it.",
+  "approved": true or false (reject freely when the plan deserves it),
+  "message": "4-7 short dramatic paragraphs separated by \\n\\n. Name the user repeatedly. Quote their own event details back at them. If rejecting, be a hilarious, vocal roast of the plan with a demand to do better. If approving, be thunderously proud.",
+  "historical": "2-4 short lines contrasting ancestral hardship with this specific event, ending with whether the council believes they will survive it.",
   "wisdomCategory": "${wisdomCategory}"
 }`;
 
@@ -951,6 +962,7 @@ Respond ONLY with valid JSON (no markdown fences) in exactly this shape:
       const noDash = (s) => (typeof s === 'string' ? s.replace(/\s*[—–]\s*/g, ', ') : s);
       parsed.message = noDash(parsed.message);
       parsed.historical = noDash(parsed.historical);
+      parsed.approved = parsed.approved !== false;
       return parsed;
     } catch (err) {
       lastErr = err;
@@ -963,56 +975,57 @@ Respond ONLY with valid JSON (no markdown fences) in exactly this shape:
 function offlineCouncil(ev, local, wisdomCategory) {
   const p = state.profile;
   const time = to12h(ev.start);
-  const approving = local.score >= 55;
+  const approved = local.score >= 50;
 
   const openings = [
-    `${p.name}, your fictional ancestral council has reviewed your plan to ${lower(ev.name)} at ${time}.`,
-    `${p.name}. The council has gathered. They have read the words "${ev.name}" aloud. Twice.`,
-    `A hush fell over the fictional ancestral council when your mission, "${ev.name}", was announced at ${time}.`,
-  ];
-  const reactions = [
-    'They are confused.',
-    'One of them has sat down.',
-    'There was a long silence. It is still going.',
-    'Someone asked if this was a joke. Nobody answered.',
+    `${p.name}. ${p.name.toUpperCase()}. The fictional ancestral council of Nexus Nationality Camp has convened over your plan to ${lower(ev.name)} at ${time}.`,
+    `${p.name}, the council has gathered in emergency session. Someone read the words "${ev.name}" aloud. Twice. The second reading did not help.`,
+    `A hush fell over the Nexus Nationality Camp council chamber, ${p.name}, when your mission, "${ev.name}", was announced for ${time} at ${ev.location}.`,
   ];
   const laments = [
     'They crossed oceans.\nThey survived hardship.\nThey built civilizations.',
     'They walked for days without complaining.\nThey raised eleven children.\nThey never once owned a calendar.',
     'They endured famine, weather, and relatives.\nThey carried entire families on their backs.\nThey did not have notifications.',
   ];
-  const punches = [
-    `And now you are using this technology to schedule ${lower(ev.name)}.`,
-    `And now the great technology of the ages is being used for "${ev.name}" at ${ev.location}.`,
-    `You have inherited all of that. You have scheduled ${lower(ev.name)}.`,
-  ];
-  const blessings = approving
+
+  let message;
+  if (approved) {
+    const cheers = [
+      `And when they heard your reasoning, ${p.name}, "${ev.description}", an elder stood up. Then another. Then all of them. There was table-slamming. Approving table-slamming.`,
+      `The council reviewed the details, ${p.name}. The time: ${time}. The place: ${ev.location}. The declared importance: ${ev.importance}. One of them wept. Openly. Into a very old cup.`,
+      `${p.name}, they argued about it for what felt like three generations, which for this council is a Tuesday. Then the eldest raised a hand and said your name with something dangerously close to pride.`,
+    ];
+    const blessings = [
+      `VERDICT: APPROVED. Thunderously approved. The entire camp shall hear of this, ${p.name}. Show up on time. Eat something first. Make them proud.`,
+      `APPROVED, ${p.name}. Loudly. The council only asks that you do not cancel, because they have already told the other councils at camp.`,
+      `The council approves, ${p.name}, and they approve at full volume. Joy is also important, and you have scheduled some. Go and claim it.`,
+    ];
+    message = [pick(openings), pick(laments), pick(cheers), pick(blessings)].join('\n\n');
+  } else {
+    const roasts = [
+      `${p.name}. Look at this plan. LOOK at it. "${ev.description}". The council read that justification three times searching for the effort, and returned empty-handed.`,
+      `The council has questions, ${p.name}. Chief among them: is this truly the boldest use of ${time} on ${formatDate(new Date(ev.date))} that a certified attendee of Nexus Nationality Camp could produce?`,
+      `An elder stood up, ${p.name}, pointed at the words "${ev.name}", and sat back down without speaking. That was the whole speech. It was devastating.`,
+    ];
+    const demands = [
+      `VERDICT: REJECTED. Not because they are cruel, ${p.name}, but because they know what you are capable of, and this is not it. Add a friend. Add a purpose. Add literally one detail that suggests ambition. Then return.`,
+      `REJECTED, ${p.name}, at considerable volume. The council demands a worthier draft: more intention, more life, ideally more snacks. You may defy them, but they will be watching. They are always watching.`,
+      `The verdict is REJECTED, and the chamber echoed with it, ${p.name}. Revise this plan into something the camp can sing about. Or defy the council, if you dare. They respect audacity almost as much as they respect punctuality.`,
+    ];
+    message = [pick(roasts), pick(laments), `And now you, ${p.name}, offer the ages: "${ev.name}".`, pick(demands)].join('\n\n');
+  }
+
+  const hist = approved
     ? [
-        'However, they approve. Because joy is also important.',
-        'They approve. Reluctantly. Then genuinely. Then loudly.',
-        'The council approves. They only ask that you show up on time and eat something first.',
+        `Your ancestors faced uncertainty.\nYou, ${p.name}, face ${lower(ev.name)} at ${time}.\nThe council believes you will survive. Loudly.`,
+        `They faced unknown horizons and impossible odds.\nYou face ${ev.location}.\nThe council rates your survival odds as "almost certain," which is their highest tier.`,
       ]
     : [
-        'They approve anyway. They are not made of stone. They are made of drama.',
-        'Approved, on one condition: you do not cancel. They will know.',
-        'Approved, with a sigh so ancient it registered on a seismograph. Go. Be happy.',
+        `They faced impossible odds and never flinched.\nYou, ${p.name}, flinched at writing a proper event description.\nThe council believes you will survive this. They are less sure about the plan.`,
+        `Their greatest challenge was survival.\nYours, ${p.name}, is apparently effort.\nThe council believes in you. The council does not believe in this draft.`,
       ];
 
-  const message = [
-    pick(openings),
-    pick(reactions),
-    pick(laments),
-    pick(punches),
-    pick(blessings),
-  ].join('\n\n');
-
-  const hist = [
-    `Your ancestors faced uncertainty.\nYou face ${lower(ev.name)} at ${time}.\nThe council believes you will survive.`,
-    `They faced unknown horizons and impossible odds.\nYou face ${ev.location}.\nThe council rates your survival odds as "almost certain."`,
-    `Their greatest challenge was survival.\nYours is arriving by ${time}.\nThe council believes in you, mostly.`,
-  ];
-
-  return { message, historical: pick(hist), wisdomCategory };
+  return { message, historical: pick(hist), wisdomCategory, approved };
 }
 
 const lower = (s) => (s ? s.charAt(0).toLowerCase() + s.slice(1) : s);
@@ -1050,10 +1063,21 @@ function renderVerdict() {
   $('verdict-message').textContent = v.message;
 
   $('verdict-extra').innerHTML = `
+    <span class="chip ${v.approved ? 'wisdom' : 'warn'}">${v.approved ? 'COUNCIL VERDICT: APPROVED' : 'COUNCIL VERDICT: REJECTED'}</span>
     <span class="chip wisdom">✦ ${v.wisdomCategory}</span>
     <span class="chip">Difficulty: ${v.difficulty.label}</span>
     <span class="chip ${v.confidence < 45 ? 'warn' : ''}">Confidence: ${v.confidence}%</span>
     <div class="historical">${escapeHtml(v.historical)}</div>`;
+
+  const commitLabel = $('btn-commit').querySelector('span');
+  const reconsiderLabel = $('btn-reconsider').querySelector('span');
+  if (v.approved) {
+    commitLabel.textContent = 'Etch Into the Timeline';
+    reconsiderLabel.textContent = 'Reconsider (cowardly)';
+  } else {
+    commitLabel.textContent = 'Defy the Council and Save Anyway';
+    reconsiderLabel.textContent = 'Obey. Revise the plan.';
+  }
 
   $('verdict').hidden = false;
 
@@ -1086,7 +1110,11 @@ $('btn-commit').addEventListener('click', () => {
   save(STORE.events, state.events);
 
   bumpStreak();
-  toast('MISSION SANCTIONED', `"${ev.name}" has been etched into the timeline. There is no undo. (There is an undo.)`);
+  if (ev.verdict?.approved === false) {
+    toast('COUNCIL DEFIED', `"${ev.name}" was saved against the council's explicit, very loud objection. They have written your name in the ledger, ${state.profile?.name || 'attendee'}. In capital letters.`);
+  } else {
+    toast('MISSION SANCTIONED', `"${ev.name}" has been etched into the timeline. There is no undo. (There is an undo.)`);
+  }
 
   state.draft = null;
   state.verdict = null;
@@ -1173,6 +1201,7 @@ function openDetail(id) {
       <div class="detail-row"><span class="k">Significance</span><span class="v">${escapeHtml(ev.description)}</span></div>
       <div class="detail-row"><span class="k">Importance</span><span class="v">${escapeHtml(ev.importance)}</span></div>
       <div class="detail-row"><span class="k">Difficulty</span><span class="v"><span class="diff ${diff.cls}">${diff.label}</span></span></div>
+      <div class="detail-row"><span class="k">Council verdict</span><span class="v">${v.approved === false ? 'REJECTED (saved in open defiance)' : 'Approved'}</span></div>
       <div class="detail-row"><span class="k">Approval</span><span class="v">${v.score ?? '?'}/100</span></div>
       <div class="detail-row"><span class="k">Destiny confidence</span><span class="v">${v.confidence ?? '?'}%. ${confidenceLine(v.confidence ?? 50)}</span></div>
       ${v.wisdomCategory ? `<div class="detail-row"><span class="k">Wisdom category</span><span class="v">${escapeHtml(v.wisdomCategory)}</span></div>` : ''}
