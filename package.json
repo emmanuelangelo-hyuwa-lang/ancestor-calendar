@@ -1,0 +1,21 @@
+{
+  "name": "ancestor-calendar",
+  "version": "1.0.0",
+  "description": "Your ancestors did not survive thousands of years of hardship for you to casually pick a calendar date. Earn your appointment.",
+  "type": "module",
+  "scripts": {
+    "dev": "npx http-server -p 3000",
+    "build": "echo 'Static site - no build needed'",
+    "lint": "echo 'No linter configured'"
+  },
+  "keywords": [
+    "calendar",
+    "scheduling",
+    "humor"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
